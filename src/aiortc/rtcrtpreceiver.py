@@ -5,6 +5,7 @@ import queue
 import random
 import threading
 import time
+import socket
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
 
@@ -272,6 +273,10 @@ class RTCRtpReceiver:
         self.__remote_streams: Dict[int, StreamStatistics] = {}
         self.__rtcp_ssrc: Optional[int] = None
 
+
+        # Cognite Edit elilas.bjorne@cognite.com
+        self.opened_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
     @property
     def track(self) -> MediaStreamTrack:
         """
@@ -368,6 +373,7 @@ class RTCRtpReceiver:
             self.__rtcp_task = asyncio.ensure_future(self._run_rtcp())
             self.__started = True
 
+
     def setTransport(self, transport: RTCDtlsTransport) -> None:
         self.__transport = transport
 
@@ -419,7 +425,11 @@ class RTCRtpReceiver:
         Handle an incoming RTP packet.
         """
         self.__log_debug("< %s", packet)
-
+        #### cognite added
+        packet_byte = packet.serialize()
+        #print(packet_byte)
+        self.opened_socket.sendto(packet_byte, ("10.250.0.1", 5018))
+        #### cognite added elias.borne@cognite.com
         # feed bitrate estimator
         if self.__remote_bitrate_estimator is not None:
             if packet.extensions.abs_send_time is not None:
